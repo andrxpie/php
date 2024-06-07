@@ -1,36 +1,23 @@
 <?php
-include_once "connection_database.php";
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    addNewUser($pdo);
-}
-
-function addNewUser($pdo) {
-    if (isset($_POST['name'], $_POST['email'], $_POST['phone']) && isset($_FILES['image'])) {
-        $name = $_POST['name'];
-        $email = $_POST['email'] . '@supermail.com';
-        $phone = $_POST['phone'];
-
-        $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-        $image = $_FILES['image'];
-        $uploadFile = MEDIA . uniqid() . '.' .$ext;
-
-        if (move_uploaded_file($image['tmp_name'], $uploadFile)) {
-            $sql = "INSERT INTO tbl_users (name, image, email, phone) VALUES (:name, :image, :email, :phone)";
-            $stmt = $pdo->prepare($sql);
-
-            try {
-                $stmt->execute(['name' => $name, 'image' => $uploadFile, 'email' => $email, 'phone' => $phone]);
-                header('Location: //localhost/index.php');
-            } catch (PDOException $e) {
-                echo "Error: " . $e->getMessage();
-            }
-        } else {
-            echo "Failed to upload photo.";
-        }
-    } else {
-        echo "All fields are required.";
+if($_SERVER["REQUEST_METHOD"]=="POST") {
+    include_once $_SERVER["DOCUMENT_ROOT"]."/connection_database.php";
+    $folderName = $_SERVER['DOCUMENT_ROOT'].'/'. MEDIA;
+    if (!file_exists($folderName)) {
+        mkdir($folderName, 0777);
     }
+    $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+    $fileName = uniqid() . '.' .$ext;
+    $uploadfile = $folderName ."/". $fileName;
+    move_uploaded_file($_FILES['image']['tmp_name'], $uploadfile);
+    $name =  $_POST['name'];
+    $email = $_POST['email'];
+    $phone = $_POST['phone'];
+    $sql = 'INSERT INTO tbl_users (name, email, phone, image) VALUES (:name, :email, :phone, :image)';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute(['name' => $name, 'email' => $email, 'phone' => $phone, 'image' => $fileName]);
+
+    header('Location: /');
+    exit();
 }
 ?>
 
@@ -51,16 +38,25 @@ function addNewUser($pdo) {
             <h1>Add New User</h1>
             <form class="col-md-6 offset-md-3 needs-validation" method="POST" enctype="multipart/form-data" novalidate>
                 <div class="mb-3">
-                    <label for="name" class="form-label">Name:</label>
+                    <label for="name" class="form-label">П.І.Б.</label>
                     <input type="text" class="form-control" id="name" name="name" required>
+                    <div class="invalid-feedback">
+                        П.І.Б. не може бути порожнім.
+                    </div>
                 </div>
                 <div class="mb-3">
-                    <label for="email" class="form-label">Email:</label>
+                    <label for="email" class="form-label">Email</label>
                     <input type="email" class="form-control" id="email" name="email" required>
+                    <div class="invalid-feedback">
+                        Email не може бути порожнім.
+                    </div>
                 </div>
                 <div class="mb-3">
-                    <label for="phone" class="form-label">Phone:</label>
+                    <label for="phone" class="form-label">Номер телефону</label>
                     <input type="text" class="form-control" id="phone" name="phone" required>
+                    <div class="invalid-feedback">
+                        Номер телефону не може бути порожнім.
+                    </div>
                 </div>
                 <div class="mb-3">
                     <div class="row d-flex align-items-center">
@@ -98,14 +94,11 @@ function addNewUser($pdo) {
     }
 </script>
 <script>
-    // Example starter JavaScript for disabling form submissions if there are invalid fields
     (() => {
         'use strict'
 
-        // Fetch all the forms we want to apply custom Bootstrap validation styles to
         const forms = document.querySelectorAll('.needs-validation')
 
-        // Loop over them and prevent submission
         Array.from(forms).forEach(form => {
             form.addEventListener('submit', event => {
                 if (!form.checkValidity()) {
