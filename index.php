@@ -77,7 +77,7 @@ include_once "connection_database.php";
     </div>
 </div>
 <script src="/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="/js/axios.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const dialogDelete = new bootstrap.Modal("#dialogDelete");
